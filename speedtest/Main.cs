@@ -8,36 +8,44 @@ internal class Program
         TestDownloadSpeed();
     }
 
-
     public static void TestDownloadSpeed()
     {
         string fileUrl = "https://deanhume.com/content/files/2025/07/10MB.zip";
         double totalSpeed = 0;
         int testCount = 5;
 
-        for (int i = 1; i <= testCount; i++)
+        try
         {
-            using (WebClient client = new WebClient())
+            for (int i = 1; i <= testCount; i++)
             {
-                Stopwatch sw = new Stopwatch();
-                byte[] data;
+                using (WebClient client = new WebClient())
+                {
+                    Stopwatch sw = new Stopwatch();
+                    byte[] data;
 
-                Console.WriteLine("Starting download...");
+                    Console.WriteLine("Starting download...");
 
-                sw.Start();
-                data = client.DownloadData(fileUrl);
-                sw.Stop();
+                    sw.Start();
+                    data = client.DownloadData(fileUrl);
+                    sw.Stop();
 
-                double seconds = sw.Elapsed.TotalSeconds;
-                double megabytes = data.Length / (1024.0 * 1024.0);
-                double speedMbps = megabytes * 8 / seconds;
+                    double seconds = sw.Elapsed.TotalSeconds;
+                    double megabytes = data.Length / (1024.0 * 1024.0);
+                    double speedMbps = megabytes * 8 / seconds;
 
-                totalSpeed += speedMbps;
+                    totalSpeed += speedMbps;
+                }
             }
+
+            double averageSpeed = totalSpeed / testCount;
+            Console.WriteLine($"Average Download speed: {averageSpeed:F2} Mbps");
         }
-                
-        double averageSpeed = totalSpeed / testCount;
-        Console.WriteLine($"Average Download speed: {averageSpeed:F2} Mbps");
+        catch (System.Exception)
+        {
+            Console.WriteLine("Connection failed. Looks like you might be offline.");
+        }
+
+
 
     }
 }
