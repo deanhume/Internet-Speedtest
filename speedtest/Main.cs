@@ -1,16 +1,17 @@
 ﻿using System.Diagnostics;
-using System.Net;
 
 internal class Program
 {
-    private static void Main(string[] args)
+    private static readonly HttpClient _httpClient = new();
+
+    private static async Task Main()
     {
-        TestDownloadSpeed();
+        await TestDownloadSpeed();
     }
 
-    public static void TestDownloadSpeed()
+    public static async Task TestDownloadSpeed()
     {
-        string fileUrl = "https://deanhume.com/content/files/2025/07/10MB.zip";
+        string fileUrl = "https://github.com/deanhume/Internet-Speedtest/raw/refs/heads/main/misc/content.zip";
         double totalSpeed = 0;
         int testCount = 5;
 
@@ -18,34 +19,37 @@ internal class Program
         {
             for (int i = 1; i <= testCount; i++)
             {
-                using (WebClient client = new WebClient())
+                Console.Write($"  Test {i}/{testCount}... ");
+
+                var sw = Stopwatch.StartNew();
+                using var response = await _httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                long totalBytes = 0;
+                var buffer = new byte[81920];
+                using var stream = await response.Content.ReadAsStreamAsync();
+
+                int bytesRead;
+                while ((bytesRead = await stream.ReadAsync(buffer)) > 0)
                 {
-                    Stopwatch sw = new Stopwatch();
-                    byte[] data;
-
-                    Console.WriteLine("Starting download...");
-
-                    sw.Start();
-                    data = client.DownloadData(fileUrl);
-                    sw.Stop();
-
-                    double seconds = sw.Elapsed.TotalSeconds;
-                    double megabytes = data.Length / (1024.0 * 1024.0);
-                    double speedMbps = megabytes * 8 / seconds;
-
-                    totalSpeed += speedMbps;
+                    totalBytes += bytesRead;
                 }
+                sw.Stop();
+
+                double seconds = sw.Elapsed.TotalSeconds;
+                double megabytes = totalBytes / (1024.0 * 1024.0);
+                double speedMbps = megabytes * 8 / seconds;
+                totalSpeed += speedMbps;
+
+                Console.WriteLine($"{speedMbps:F2} Mbps");
             }
 
             double averageSpeed = totalSpeed / testCount;
-            Console.WriteLine($"Average Download speed: {averageSpeed:F2} Mbps");
+            Console.WriteLine($"\n  Average Download speed: {averageSpeed:F2} Mbps");
         }
-        catch (System.Exception)
+        catch (Exception)
         {
             Console.WriteLine("Connection failed. Looks like you might be offline.");
         }
-
-
-
     }
 }
