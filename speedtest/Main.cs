@@ -4,8 +4,16 @@ internal class Program
 {
     private static readonly HttpClient _httpClient = new();
 
-    private static async Task Main()
+    private const string Version = "1.0.0";
+
+    private static async Task Main(string[] args)
     {
+        if (args.Length > 0 && (args[0] == "--version" || args[0] == "-v"))
+        {
+            Console.WriteLine($"speedtest {Version}");
+            return;
+        }
+
         // Set up cancellation so Ctrl+C gracefully stops the test
         using var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (_, e) =>
