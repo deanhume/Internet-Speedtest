@@ -33,7 +33,7 @@ internal class Program
     {
         // 10MB test file hosted on GitHub
         string fileUrl = "https://github.com/deanhume/Internet-Speedtest/raw/refs/heads/main/misc/content.zip";
-        double totalSpeed = 0;
+        var speedResults = new List<double>();
         int testCount = 5;
         int completedTests = 0;
 
@@ -67,21 +67,24 @@ internal class Program
                 double seconds = sw.Elapsed.TotalSeconds;
                 double megabytes = totalBytes / (1024.0 * 1024.0);
                 double speedMbps = megabytes * 8 / seconds;
-                totalSpeed += speedMbps;
+                speedResults.Add(speedMbps);
                 completedTests++;
 
                 Console.WriteLine($"{speedMbps:F2} Mbps");
             }
 
-            double averageSpeed = totalSpeed / testCount;
-            Console.WriteLine($"\n  Average Download speed: {averageSpeed:F2} Mbps");
+            // Discard the fastest and slowest results to reduce outlier impact
+            var speeds = speedResults.OrderBy(s => s).ToList();
+            var trimmed = speeds.Skip(1).Take(speeds.Count - 2).ToList();
+            double averageSpeed = trimmed.Average();
+            Console.WriteLine($"\n  Average Download speed (excluding outliers): {averageSpeed:F2} Mbps");
         }
         catch (OperationCanceledException)
         {
             // User pressed Ctrl+C — show partial results if any tests completed
             if (completedTests > 0)
             {
-                double averageSpeed = totalSpeed / completedTests;
+                double averageSpeed = speedResults.Average();
                 Console.WriteLine($"\n  Average Download speed ({completedTests} test(s) completed): {averageSpeed:F2} Mbps");
             }
         }
