@@ -27,6 +27,22 @@ internal class Program
     }
 
     /// <summary>
+    /// Writes a speed value in colour: green (≥50), yellow (≥20), or red (&lt;20 Mbps).
+    /// </summary>
+    private static void WriteSpeedColoured(double speedMbps)
+    {
+        var originalColour = Console.ForegroundColor;
+        Console.ForegroundColor = speedMbps switch
+        {
+            >= 50 => ConsoleColor.Green,
+            >= 20 => ConsoleColor.Yellow,
+            _ => ConsoleColor.Red
+        };
+        Console.WriteLine($"{speedMbps:F2} Mbps");
+        Console.ForegroundColor = originalColour;
+    }
+
+    /// <summary>
     /// Downloads a test file multiple times and calculates the average download speed in Mbps.
     /// </summary>
     public static async Task TestDownloadSpeed(CancellationToken cancellationToken = default)
@@ -70,14 +86,15 @@ internal class Program
                 speedResults.Add(speedMbps);
                 completedTests++;
 
-                Console.WriteLine($"{speedMbps:F2} Mbps");
+                WriteSpeedColoured(speedMbps);
             }
 
             // Discard the fastest and slowest results to reduce outlier impact
             var speeds = speedResults.OrderBy(s => s).ToList();
             var trimmed = speeds.Skip(1).Take(speeds.Count - 2).ToList();
             double averageSpeed = trimmed.Average();
-            Console.WriteLine($"\n  Average Download speed (excluding outliers): {averageSpeed:F2} Mbps");
+            Console.Write("\n  Average Download speed (excluding outliers): ");
+            WriteSpeedColoured(averageSpeed);
         }
         catch (OperationCanceledException)
         {
@@ -85,7 +102,8 @@ internal class Program
             if (completedTests > 0)
             {
                 double averageSpeed = speedResults.Average();
-                Console.WriteLine($"\n  Average Download speed ({completedTests} test(s) completed): {averageSpeed:F2} Mbps");
+                Console.Write($"\n  Average Download speed ({completedTests} test(s) completed): ");
+                WriteSpeedColoured(averageSpeed);
             }
         }
         catch (Exception)
